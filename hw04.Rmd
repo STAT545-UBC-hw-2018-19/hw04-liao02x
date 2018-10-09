@@ -1,0 +1,103 @@
+---
+title: "STAT545 hw04"
+output: github_document
+---
+
+## Setting ups
+```{r}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gapminder))
+```
+
+## Data Reshaping Prompts
+
+### Activity #2
+
+##### Make a tibble with one row per year and columns for life expectancy for two or more countries.
+
+```{r}
+lvsc <- gapminder %>%
+  group_by(country) %>%
+  filter(continent == "Americas" & pop[year == 2007] > 2e7) %>%
+  select(year, country, lifeExp) %>%
+  spread(key = "country", value = "lifeExp")
+```
+
+- Use `knitr::kable()` to make this table look pretty in your rendered homework.
+
+```{r}
+knitr::kable(lvsc)
+```
+
+- Take advantage of this new data shape to scatterplot life expectancy for one country against that of another.
+
+```{r}
+lvsc %>%
+  ggplot() +
+  geom_point(aes(Canada, `United States`, color = year))
+```
+
+
+## Join Prompts
+
+### Activity #1
+
+##### Create a second data frame, complementary to Gapminder. Join this with (part of) Gapminder using a dplyr join function and make some observations about the process and result. Explore the different types of joins.
+
+- One row per country, a country variable and one or more variables with extra info, such as language spoken, NATO membership, national animal, or capitol city.
+
+```{r}
+ac <- gapminder %>%
+  filter(continent == "Americas" & year == 2007) %>%
+  select(-continent)
+df1 <- tribble(
+  ~country, ~`NATO membership`, ~`capital city`,
+  "Canada", "Yes", "Ottawa",
+  "United States", "Yes", "Washington",
+  "Mexico", "No", "Mexico City",
+  "Brazil", "No", "Brasilia",
+  "Argentina", "No", "Buenos Aires"
+)
+```
+
+Now we can explore `left_join`, `right_join`, `inner_join` and `full_join`.
+```{r}
+knitr::kable(left_join(ac, df1))
+knitr::kable(right_join(ac, df1))
+knitr::kable(inner_join(ac, df1))
+knitr::kable(full_join(ac, df1))
+```
+
+
+
+- One row per continent, a continent variable and one or more variables with extra info, such as northern versus southern hemisphere.
+
+```{r}
+conts <- gapminder %>%
+  group_by(continent) %>%
+  summarise(`country num` = length(country))
+df2 <- tribble(
+  ~continent, ~hemisphere,
+  "Asia", "North",
+  "Europe", "North",
+  "Oceania", "South"
+)
+```
+
+Again we can explore `left_join`, `right_join`, `inner_join` and `full_join` now.
+```{r}
+knitr::kable(left_join(conts, df2))
+knitr::kable(right_join(conts, df2))
+knitr::kable(inner_join(conts, df2))
+knitr::kable(full_join(conts, df2))
+```
+
+### Activity #3
+
+##### Explore `merge` and `match`
+
+```{r}
+knitr::kable(merge(df1, df2))
+match(df1, df2)
+match(ac$country, gapminder$country)
+```
